@@ -74,5 +74,5 @@ jobs:
         with:
           context: .
           file: ./Containerfile
-          push: {{ github.ref == 'refs/heads/main' }}
+          push: ${{ github.ref == 'refs/heads/main' }}
           tags: quay.io/abn/gpu-jupyter-alphafold:cuda-${{ matrix.cuda-version }}-${{ steps.vars.outputs.sha_short }}
