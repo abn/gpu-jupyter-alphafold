@@ -46,15 +46,19 @@ RUN curl -sS -L ${ALPHAFOLD_PARAM_SOURCE_URL} \
 
 # Configure pip
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+RUN pip install --upgrade pip
 
 # Install additional packages
-RUN pip --disable-pip-version-check install py3dmol
+RUN pip install py3dmol
 
 # Install jax
-RUN pip --disable-pip-version-check install --upgrade \
+RUN pip install --upgrade \
       jax==0.3.16 \
       jaxlib==0.3.15+cuda11.cudnn82 \
       -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+
+# Workaround for pip issues, this is brute force whack-a-mole
+RUN pip uninstall -y keras
 
 # Install alphafold (editable)
 RUN pip install -e /opt/alphafold
