@@ -14,7 +14,8 @@ ENV XDG_CACHE_HOME="${HOME}/.cache/"
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         hmmer \
         kalign \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
 # Compile HHsuite from source.
 RUN git clone --branch v3.3.0 https://github.com/soedinglab/hh-suite.git /tmp/hh-suite \
@@ -61,6 +62,9 @@ RUN pip install --upgrade \
 
 # Install alphafold (editable)
 RUN pip install -e /opt/alphafold
+
+# Cleanup
+RUN rm -rf /tmp/*
 
 # Make sure all necessary environment variables are set
 ENV TF_FORCE_UNIFIED_MEMORY=1
