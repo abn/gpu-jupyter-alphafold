@@ -3,6 +3,8 @@ ARG CUDA=11.6
 FROM docker.io/cschranz/gpu-jupyter:v1.4_cuda-${CUDA}_ubuntu-20.04
 
 USER root
+ENV HOME=/root
+ENV XDG_CACHE_HOME="${HOME}/.cache/"
 
 ARG ALPHAFOLD_COMMIT=86a0b8ec7a39698a7c2974420c4696ea4cb5743a
 ARG HH_SUITE=3.3.0
@@ -65,3 +67,5 @@ RUN fix-permissions $CONDA_DIR
 RUN fix-permissions /home/$NB_USER
 
 USER $NB_UID
+ENV HOME="/home/${NB_USER}"
+ENV XDG_CACHE_HOME="${HOME}/.cache/"
