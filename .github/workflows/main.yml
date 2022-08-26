@@ -25,36 +25,54 @@ jobs:
       - name: Check outputs
         run: echo ${{ steps.vars.outputs.sha_short }}
 
-      - name: Buildah Action
-        id: build-image
-        uses: redhat-actions/buildah-build@v2
-        with:
-          image: gpu-jupyter-alphafold
-          tags: latest cuda-${{ matrix.cuda-version }}-${{ steps.vars.outputs.sha_short }}
-          containerfiles: |
-            ./Containerfile
-          build-args: |
-            CUDA=${{ matrix.cuda-version }}
-          # workaround for https://github.com/pypa/pip/issues/11368
-          extra-args: |
-            --storage-opt=overlay.mount_program=
+#      - name: Buildah Action
+#        id: build-image
+#        uses: redhat-actions/buildah-build@v2
+#        with:
+#          image: gpu-jupyter-alphafold
+#          tags: latest cuda-${{ matrix.cuda-version }}-${{ steps.vars.outputs.sha_short }}
+#          containerfiles: |
+#            ./Containerfile
+#          build-args: |
+#            CUDA=${{ matrix.cuda-version }}
+#          # workaround for https://github.com/pypa/pip/issues/11368
+#          extra-args: |
+#            --storage-opt=overlay.mount_program=
+#
+#      - name: Push To quay.io
+#        uses: redhat-actions/push-to-registry@v2
+#        if: github.ref == 'refs/heads/main'
+#        with:
+#          image: ${{ steps.build-image.outputs.image }}
+#          tags: cuda-${{ matrix.cuda-version }}-${{ steps.vars.outputs.sha_short }}
+#          registry: quay.io/abn
+#          username: ${{ secrets.REGISTRY_USERNAME }}
+#          password: ${{ secrets.REGISTRY_PASSWORD }}
+#
+#      - name: Push To quay.io (latest tag)
+#        if: ${{ github.ref == 'refs/heads/main' && matrix.cuda-version == '11.6'  }}
+#        uses: redhat-actions/push-to-registry@v2
+#        with:
+#          image: ${{ steps.build-image.outputs.image }}
+#          tags: latest
+#          registry: quay.io/abn
+#          username: ${{ secrets.REGISTRY_USERNAME }}
+#          password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: Push To quay.io
-        uses: redhat-actions/push-to-registry@v2
-        if: github.ref == 'refs/heads/main'
+      - name: Login to quay.io
+        uses: docker/login-action@v1
         with:
-          image: ${{ steps.build-image.outputs.image }}
-          tags: cuda-${{ matrix.cuda-version }}-${{ steps.vars.outputs.sha_short }}
           registry: quay.io/abn
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: Push To quay.io (latest tag)
-        if: ${{ github.ref == 'refs/heads/main' && matrix.cuda-version == '11.6'  }}
-        uses: redhat-actions/push-to-registry@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
         with:
-          image: ${{ steps.build-image.outputs.image }}
-          tags: latest
-          registry: quay.io/abn
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+          context: .
+          file: ./Containerfile
+          push: github.ref == 'refs/heads/main'
+          tags: quay.io/abn/gpu-jupyter-alphafold:cuda-${{ matrix.cuda-version }}-${{ steps.vars.outputs.sha_short }}
