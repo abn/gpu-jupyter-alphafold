@@ -1,0 +1,57 @@
+name: Main Workflow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  container-build:
+    name: Container Image Build (CUDA:${{ matrix.cuda-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cuda-version: [ "11.6" ]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set outputs
+        id: vars
+        run: echo "::set-output name=sha_short::${{ github.sha }}"
+
+      - name: Check outputs
+        run: echo ${{ steps.vars.outputs.sha_short }}
+
+      - name: Buildah Action
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: gpu-jupyter-alphafold
+          tags: latest cuda-${{ matrix.cuda-version }}-${{ steps.vars.outputs.sha_short }}
+          containerfiles: |
+            ./Containerfile
+          build-args: |
+            CUDA=${{ matrix.cuda-version }}
+
+      - name: Push To quay.io
+        uses: redhat-actions/push-to-registry@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: cuda-${{ matrix.cuda-version }}-${{ steps.vars.outputs.sha_short }}
+          registry: quay.io/abn
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Push To quay.io (latest tag)
+        if: ${{ github.ref == 'refs/heads/main' && matrix.cuda-version == '11.6'  }}
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: latest
+          registry: quay.io/abn
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
