@@ -40,7 +40,7 @@ RUN wget -q -P /opt/alphafold/alphafold/common/ \
 
 RUN mkdir -p /opt/alphafold/data/params
 RUN curl -sS -L ${ALPHAFOLD_PARAM_SOURCE_URL} \
-    | tar -xz -C /opt/alphafold/data/params
+    | tar -x --preserve-permissions --no-same-owner -C /opt/alphafold/data/params
 
 # Configure pip
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
