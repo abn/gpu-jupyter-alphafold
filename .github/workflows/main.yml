@@ -35,6 +35,9 @@ jobs:
             ./Containerfile
           build-args: |
             CUDA=${{ matrix.cuda-version }}
+          # workaround for https://github.com/pypa/pip/issues/11368
+          extra-args: |
+            --storage-opt=overlay.mount_program=
 
       - name: Push To quay.io
         uses: redhat-actions/push-to-registry@v2
