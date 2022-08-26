@@ -2,14 +2,14 @@ ARG CUDA=11.6
 
 FROM docker.io/cschranz/gpu-jupyter:v1.4_cuda-${CUDA}_ubuntu-20.04
 
-USER root
-ENV HOME=/root
-ENV XDG_CACHE_HOME="${HOME}/.cache/"
-
 ARG ALPHAFOLD_COMMIT=86a0b8ec7a39698a7c2974420c4696ea4cb5743a
 ARG HH_SUITE=3.3.0
 ARG OPENMM=7.7.0
 ARG ALPHAFOLD_PARAM_SOURCE_URL="https://storage.googleapis.com/alphafold/alphafold_params_colab_2022-03-02.tar"
+
+USER root
+ENV HOME=/root
+ENV XDG_CACHE_HOME="${HOME}/.cache/"
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         hmmer \
@@ -46,6 +46,8 @@ RUN curl -sS -L ${ALPHAFOLD_PARAM_SOURCE_URL} \
 
 # Configure pip
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PIP_NO_CACHE_DIR=1
+
 RUN pip install --upgrade pip
 
 # Install additional packages
@@ -57,9 +59,6 @@ RUN pip install --upgrade \
       jaxlib==0.3.15+cuda11.cudnn82 \
       -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 
-# Workaround for pip issues, this is brute force whack-a-mole
-RUN pip uninstall -y keras
-
 # Install alphafold (editable)
 RUN pip install -e /opt/alphafold
 
@@ -68,6 +67,7 @@ ENV TF_FORCE_UNIFIED_MEMORY=1
 ENV XLA_PYTHON_CLIENT_MEM_FRACTION=2.0
 
 RUN fix-permissions $CONDA_DIR
+RUN fix-permissions $/opt/alphafold
 RUN fix-permissions /home/$NB_USER
 
 USER $NB_UID
