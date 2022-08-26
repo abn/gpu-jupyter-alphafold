@@ -67,7 +67,7 @@ ENV TF_FORCE_UNIFIED_MEMORY=1
 ENV XLA_PYTHON_CLIENT_MEM_FRACTION=2.0
 
 RUN fix-permissions $CONDA_DIR
-RUN fix-permissions $/opt/alphafold
+RUN fix-permissions /opt/alphafold
 RUN fix-permissions /home/$NB_USER
 
 USER $NB_UID
