@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         cuda-version: [ "11.7.1" ]
-        latest: "11.7.1"
+        latest: ["11.7.1"]
     steps:
       - uses: actions/checkout@v2
 
