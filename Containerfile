@@ -41,9 +41,9 @@ RUN mkdir /opt/alphafold \
 RUN wget -q -P /opt/alphafold/alphafold/common/ \
   https://git.scicore.unibas.ch/schwede/openstructure/-/raw/7102c63615b64735c4941278d92b554ec94415f8/modules/mol/alg/src/stereo_chemical_props.txt
 
-RUN mkdir -p /opt/alphafold/data/params \
-    && curl -sS -L ${ALPHAFOLD_PARAM_SOURCE_URL} \
-        | tar -x --preserve-permissions --no-same-owner -C /opt/alphafold/data/params
+# RUN mkdir -p /opt/alphafold/data/params \
+#     && curl -sS -L ${ALPHAFOLD_PARAM_SOURCE_URL} \
+#         | tar -x --preserve-permissions --no-same-owner -C /opt/alphafold/data/params
 
 ENV CONDA_DIR=/opt/conda
 ENV PATH="${CONDA_DIR}/bin:${PATH}"
@@ -65,6 +65,11 @@ RUN conda install -y -c conda-forge \
       cudatoolkit \
       pdbfixer \
       py3dmol
+
+RUN conda clean -afy \
+    && find /opt/conda/ -follow -type f -name '*.a' -delete \
+    && find /opt/conda/ -follow -type f -name '*.pyc' -delete \
+    && find /opt/conda/ -follow -type f -name '*.js.map' -delete
 
 # Install alphafold (editable)
 RUN pip install --no-deps -e /opt/alphafold
