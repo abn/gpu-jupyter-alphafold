@@ -15,11 +15,7 @@ jobs:
     strategy:
       matrix:
         cuda-version: [ "11.7.1" ]
-        latest: false
-      include:
-        cuda-version: "11.7.1"
-        latest: true
-
+        latest: "11.7.1"
     steps:
       - uses: actions/checkout@v2
 
@@ -55,7 +51,7 @@ jobs:
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Push To quay.io (latest tag)
-        if: ${{ github.ref == 'refs/heads/main' && matrix.latest  }}
+        if: ${{ github.ref == 'refs/heads/main' && matrix.latest == matrix.cuda-version  }}
         uses: redhat-actions/push-to-registry@v2
         with:
           image: ${{ steps.build-image.outputs.image }}
