@@ -50,14 +50,16 @@ ENV PATH="${CONDA_DIR}/bin:${PATH}"
 
 COPY --from=base-notebook /opt/conda /opt/conda
 
-RUN pip wheel jax==0.3.16 \
+RUN pip install jax==0.3.16 \
       jaxlib==0.3.15+cuda11.cudnn82 \
       -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+
+RUN pip install tensorflow
 
 RUN cd /opt/alphafold \
     && python setup.py egg_info \
     && cat alphafold.egg-info/requires.txt \
-        | grep -Ev "^(docker|jax|jaxlib)$" \
+        | grep -Ev "^(docker|jax|jaxlib|tensorflow-cpu)$" \
         | xargs -I% pip install %
 
 RUN conda install -y -c conda-forge \
