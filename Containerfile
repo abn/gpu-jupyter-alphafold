@@ -75,7 +75,7 @@ RUN conda clean -afy \
 RUN pip install --no-deps -e /opt/alphafold
 
 # Out-of-tree patches
-RUN find /opt/alphafold -type f -name "*.py" -exec sed -i s/simtk.openmm/openmm/ {} \
+RUN sh -c 'find /opt/alphafold -type f -name "*.py" -exec sed -i s/simtk.openmm/openmm/ {} \;'
 
 FROM docker.io/nvidia/cuda:${CUDA}-cudnn8-runtime-ubuntu${UBUNTU}
 
