@@ -74,6 +74,9 @@ RUN conda clean -afy \
 # Install alphafold (editable)
 RUN pip install --no-deps -e /opt/alphafold
 
+# Out-of-tree patches
+RUN find /opt/alphafold -type f -name "*.py" -exec sed -i s/simtk.openmm/openmm/ {} \
+
 FROM docker.io/nvidia/cuda:${CUDA}-cudnn8-runtime-ubuntu${UBUNTU}
 
 ARG NB_USER="jovyan"
@@ -149,6 +152,19 @@ RUN useradd -l -M -s /bin/bash -N -u "${NB_UID}" "${NB_USER}" \
     && fix-permissions "${CONDA_DIR}" \
     && fix-permissions "${ALPHAFOLD_DIR}" \
     && fix-permissions /etc/jupyter
+
+# Add SETUID bit to the ldconfig binary so that non-root users can run it.
+RUN chmod u+s /sbin/ldconfig.real
+
+# We need to run `ldconfig` first to ensure GPUs are visible, due to some quirk
+# with Debian. See https://github.com/NVIDIA/nvidia-docker/issues/1399 for
+# details.
+# ENTRYPOINT does not support easily running multiple commands, so instead we
+# write a shell script to wrap them up.
+RUN echo $'#!/bin/bash\n\
+ldconfig\n\
+python ${ALPHAFOLD_DIR}/run_alphafold.py "$@"' > /usr/local/bin/alphafold \
+  && chmod +x /usr/local/bin/alphafold
 
 USER ${NB_UID}
 WORKDIR "${HOME}"
