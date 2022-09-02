@@ -1,14 +1,17 @@
 ARG CUDA=11.7.1
 ARG UBUNTU=22.04
 
+ARG CONDA_DIR=/opt/conda
+ARG HHSUITE_DIR=/opt/hhsuite
+ARG ALPHAFOLD_DIR=/opt/alphafold
+
 FROM docker.io/jupyter/base-notebook:ubuntu-${UBUNTU} AS base-notebook
 
 
 FROM docker.io/nvidia/cuda:${CUDA}-cudnn8-devel-ubuntu${UBUNTU} AS alphafold-build
 
 ARG ALPHAFOLD_COMMIT=86a0b8ec7a39698a7c2974420c4696ea4cb5743a
-ARG ALPHAFOLD_PARAM_SOURCE_URL="https://storage.googleapis.com/alphafold/alphafold_params_colab_2022-03-02.tar"
-ARG HH_SUITE=3.3.0
+ARG HHSUITE_VERSION=3.3.0
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1
@@ -25,31 +28,33 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Compile HHsuite from source.
-RUN git clone --branch v${HH_SUITE} https://github.com/soedinglab/hh-suite.git /tmp/hh-suite \
-    && mkdir /tmp/hh-suite/build \
-    && cd /tmp/hh-suite/build \
-    # fix https://github.com/soedinglab/hh-suite/issues/282 to support AMD
-    && cmake -DCMAKE_INSTALL_PREFIX=/opt/hhsuite -DHAVE_AVX2=1 .. \
-    && make -j 4 && make install \
-    && cd - \
-    && rm -rf /tmp/hh-suite
+# RUN git clone --branch v${HHSUITE_VERSION} https://github.com/soedinglab/hh-suite.git /tmp/hh-suite \
+#     && mkdir /tmp/hh-suite/build \
+#     && cd /tmp/hh-suite/build \
+#     # fix https://github.com/soedinglab/hh-suite/issues/282 to support AMD
+#     && cmake -DCMAKE_INSTALL_PREFIX=${HHSUITE_DIR}-DHAVE_AVX2=1 .. \
+#     && make -j 4 && make install \
+#     && cd - \
+#     && rm -rf /tmp/hh-suite
 
-RUN mkdir /opt/alphafold \
+# Install hhsuite static binaries (lacks mpi support)
+RUN mkdir -p ${HHSUITE_DIR} \
+    curl -sSL https://github.com/soedinglab/hh-suite/releases/download/v${HHSUITE_VERSION}/hhsuite-${HHSUITE_VERSION}-AVX2-Linux.tar.gz \
+        | tar -xzv -C ${HHSUITE_DIR}
+
+RUN mkdir ${ALPHAFOLD_DIR} \
     && curl -sS -L \
         https://api.github.com/repos/deepmind/alphafold/tarball/${ALPHAFOLD_COMMIT} \
-        | tar -xz --strip-components=1 -C /opt/alphafold
+        | tar -xz --strip-components=1 -C ${ALPHAFOLD_DIR}
 
-RUN wget -q -P /opt/alphafold/alphafold/common/ \
+RUN wget -q -P ${ALPHAFOLD_DIR}/alphafold/common/ \
   https://git.scicore.unibas.ch/schwede/openstructure/-/raw/7102c63615b64735c4941278d92b554ec94415f8/modules/mol/alg/src/stereo_chemical_props.txt
 
-# RUN mkdir -p /opt/alphafold/data/params \
-#     && curl -sS -L ${ALPHAFOLD_PARAM_SOURCE_URL} \
-#         | tar -x --preserve-permissions --no-same-owner -C /opt/alphafold/data/params
+ENV CONDA_DIR=${CONDA_DIR}
+ENV HHSUITE_DIR=${HHSUITE_DIR}
+ENV PATH="${CONDA_DIR}/bin:${HHSUITE_DIR}/bin:${HHSUITE_DIR}/scripts:${PATH}"
 
-ENV CONDA_DIR=/opt/conda
-ENV PATH="${CONDA_DIR}/bin:${PATH}"
-
-COPY --from=base-notebook /opt/conda /opt/conda
+COPY --from=base-notebook ${CONDA_DIR} ${CONDA_DIR}
 
 RUN pip install jax==0.3.16 \
       jaxlib==0.3.15+cuda11.cudnn82 \
@@ -57,7 +62,7 @@ RUN pip install jax==0.3.16 \
 
 RUN pip install tensorflow
 
-RUN cd /opt/alphafold \
+RUN cd ${ALPHAFOLD_DIR} \
     && python setup.py egg_info \
     && cat alphafold.egg-info/requires.txt \
         | grep -Ev "^(docker|jax|jaxlib|tensorflow-cpu)$" \
@@ -70,15 +75,15 @@ RUN conda install -y -c conda-forge \
       py3dmol
 
 RUN conda clean -afy \
-    && find /opt/conda/ -follow -type f -name '*.a' -delete \
-    && find /opt/conda/ -follow -type f -name '*.pyc' -delete \
-    && find /opt/conda/ -follow -type f -name '*.js.map' -delete
+    && find ${CONDA_DIR} -follow -type f -name '*.a' -delete \
+    && find ${CONDA_DIR} -follow -type f -name '*.pyc' -delete \
+    && find ${CONDA_DIR} -follow -type f -name '*.js.map' -delete
 
 # Install alphafold (editable)
-RUN pip install --no-deps -e /opt/alphafold
+RUN pip install --no-deps -e ${ALPHAFOLD_DIR}
 
 # Out-of-tree patches
-RUN sh -c 'find /opt/alphafold -type f -name "*.py" -exec sed -i s/simtk.openmm/openmm/ {} \;'
+RUN sh -c 'find ${ALPHAFOLD_DIR} -type f -name "*.py" -exec sed -i s/simtk.openmm/openmm/ {} \;'
 
 FROM docker.io/nvidia/cuda:${CUDA}-cudnn8-runtime-ubuntu${UBUNTU}
 
@@ -93,8 +98,8 @@ USER 0
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Configure environment
-ENV CONDA_DIR=/opt/conda \
-    ALPHAFOLD_DIR=/opt/alphafold \
+ENV CONDA_DIR=${CONDA_DIR} \
+    ALPHAFOLD_DIR=${ALPHAFOLD_DIR} \
     SHELL=/bin/bash \
     NB_USER="${NB_USER}" \
     NB_UID=${NB_UID} \
@@ -146,11 +151,9 @@ COPY --from=base-notebook /etc/skel/.bashrc /etc/skel/.bashrc
 
 COPY --chown="${NB_UID}:${NB_GID}" --from=base-notebook /home/${NB_USER} /home/${NB_USER}
 
-COPY --chown="${NB_UID}:${NB_GID}" --from=alphafold-build /opt/conda /opt/conda
-COPY --chown="${NB_UID}:${NB_GID}" --from=alphafold-build /opt/hhsuite /opt/hhsuite
-COPY --chown="${NB_UID}:${NB_GID}" --from=alphafold-build /opt/alphafold /opt/alphafold
-
-RUN ln -s /opt/hhsuite/bin/* /usr/bin
+COPY --chown="${NB_UID}:${NB_GID}" --from=alphafold-build ${CONDA_DIR} ${CONDA_DIR}
+COPY --chown="${NB_UID}:${NB_GID}" --from=alphafold-build ${HHSUITE_DIR} ${HHSUITE_DIR}
+COPY --chown="${NB_UID}:${NB_GID}" --from=alphafold-build ${ALPHAFOLD_DIR} ${ALPHAFOLD_DIR}
 
 RUN useradd -l -M -s /bin/bash -N -u "${NB_UID}" "${NB_USER}" \
     && chmod g+w /etc/passwd \
