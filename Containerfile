@@ -28,7 +28,8 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
 RUN git clone --branch v${HH_SUITE} https://github.com/soedinglab/hh-suite.git /tmp/hh-suite \
     && mkdir /tmp/hh-suite/build \
     && cd /tmp/hh-suite/build \
-    && cmake -DCMAKE_INSTALL_PREFIX=/opt/hhsuite .. \
+    # fix https://github.com/soedinglab/hh-suite/issues/282 to support AMD
+    && cmake -DCMAKE_INSTALL_PREFIX=/opt/hhsuite -DHAVE_AVX2=1 .. \
     && make -j 4 && make install \
     && cd - \
     && rm -rf /tmp/hh-suite
@@ -109,6 +110,9 @@ ENV CONDA_DIR=/opt/conda \
 
 ENV PATH="${CONDA_DIR}/bin:${PATH}" \
     HOME="/home/${NB_USER}"
+
+ENV NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
 RUN apt-get update --yes \
     && apt-get upgrade --yes \
