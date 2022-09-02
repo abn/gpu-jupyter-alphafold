@@ -1,17 +1,16 @@
 ARG CUDA=11.7.1
 ARG UBUNTU=22.04
 
-ARG CONDA_DIR=/opt/conda
-ARG HHSUITE_DIR=/opt/hhsuite
-ARG ALPHAFOLD_DIR=/opt/alphafold
-
 FROM docker.io/jupyter/base-notebook:ubuntu-${UBUNTU} AS base-notebook
 
 
 FROM docker.io/nvidia/cuda:${CUDA}-cudnn8-devel-ubuntu${UBUNTU} AS alphafold-build
 
-ARG ALPHAFOLD_COMMIT=86a0b8ec7a39698a7c2974420c4696ea4cb5743a
+ARG CONDA_DIR=/opt/conda
+ARG HHSUITE_DIR=/opt/hhsuite
 ARG HHSUITE_VERSION=3.3.0
+ARG ALPHAFOLD_DIR=/opt/alphafold
+ARG ALPHAFOLD_COMMIT=86a0b8ec7a39698a7c2974420c4696ea4cb5743a
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1
@@ -50,8 +49,6 @@ RUN mkdir ${ALPHAFOLD_DIR} \
 RUN wget -q -P ${ALPHAFOLD_DIR}/alphafold/common/ \
   https://git.scicore.unibas.ch/schwede/openstructure/-/raw/7102c63615b64735c4941278d92b554ec94415f8/modules/mol/alg/src/stereo_chemical_props.txt
 
-ENV CONDA_DIR=${CONDA_DIR}
-ENV HHSUITE_DIR=${HHSUITE_DIR}
 ENV PATH="${CONDA_DIR}/bin:${HHSUITE_DIR}/bin:${HHSUITE_DIR}/scripts:${PATH}"
 
 COPY --from=base-notebook ${CONDA_DIR} ${CONDA_DIR}
@@ -87,6 +84,10 @@ RUN sh -c 'find ${ALPHAFOLD_DIR} -type f -name "*.py" -exec sed -i s/simtk.openm
 
 FROM docker.io/nvidia/cuda:${CUDA}-cudnn8-runtime-ubuntu${UBUNTU}
 
+ARG CONDA_DIR=/opt/conda
+ARG HHSUITE_DIR=/opt/hhsuite
+ARG ALPHAFOLD_DIR=/opt/alphafold
+
 ARG NB_USER="jovyan"
 ARG NB_UID="1000"
 ARG NB_GID="100"
@@ -113,11 +114,11 @@ ENV CONDA_DIR=${CONDA_DIR} \
     TF_FORCE_UNIFIED_MEMORY=1 \
     XLA_PYTHON_CLIENT_MEM_FRACTION=2.0
 
-ENV PATH="${CONDA_DIR}/bin:${PATH}" \
-    HOME="/home/${NB_USER}"
+ENV PATH="${CONDA_DIR}/bin:${HHSUITE_DIR}/bin:${HHSUITE_DIR}/scripts:${PATH}"
+ENV HOME="/home/${NB_USER}"
 
-ENV NVIDIA_VISIBLE_DEVICES=all \
-    NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
 RUN apt-get update --yes \
     && apt-get upgrade --yes \
