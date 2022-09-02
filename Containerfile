@@ -38,7 +38,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
 
 # Install hhsuite static binaries (lacks mpi support)
 RUN mkdir -p ${HHSUITE_DIR} \
-    curl -sSL https://github.com/soedinglab/hh-suite/releases/download/v${HHSUITE_VERSION}/hhsuite-${HHSUITE_VERSION}-AVX2-Linux.tar.gz \
+    && curl -sSL https://github.com/soedinglab/hh-suite/releases/download/v${HHSUITE_VERSION}/hhsuite-${HHSUITE_VERSION}-AVX2-Linux.tar.gz \
         | tar -xzv -C ${HHSUITE_DIR}
 
 RUN mkdir ${ALPHAFOLD_DIR} \
