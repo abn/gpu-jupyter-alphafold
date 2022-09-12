@@ -1,5 +1,6 @@
 ARG CUDA=11.7.1
 ARG UBUNTU=22.04
+ARG BASE=runtime
 
 FROM docker.io/jupyter/base-notebook:ubuntu-${UBUNTU} AS base-notebook
 
@@ -82,7 +83,7 @@ RUN pip install --no-deps -e ${ALPHAFOLD_DIR}
 # Out-of-tree patches
 RUN sh -c 'find ${ALPHAFOLD_DIR} -type f -name "*.py" -exec sed -i s/simtk.openmm/openmm/ {} \;'
 
-FROM docker.io/nvidia/cuda:${CUDA}-cudnn8-runtime-ubuntu${UBUNTU}
+FROM docker.io/nvidia/cuda:${CUDA}-cudnn8-${BASE}-ubuntu${UBUNTU}
 
 ARG CONDA_DIR=/opt/conda
 ARG HHSUITE_DIR=/opt/hhsuite

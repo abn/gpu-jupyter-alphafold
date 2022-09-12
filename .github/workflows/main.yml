@@ -10,10 +10,11 @@ on:
 
 jobs:
   container-build:
-    name: Container Image Build (CUDA:${{ matrix.cuda-version }})
+    name: Container Image Build (${{ matrix.cuda-version }}-${{ matrix.base-image }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        base-image: ["runtime", "devel"]
         cuda-version: [ "11.7.1" ]
         latest: [ "11.7.1" ]
     steps:
@@ -21,7 +22,8 @@ jobs:
 
       - name: Set outputs
         id: vars
-        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+        run: |
+          echo "::set-output name=image_tag::cuda-${{ matrix.cuda-version }}-${{ matrix.base-image }}-$(git rev-parse --short HEAD)"
 
       - name: Free Disk Space
         uses: jlumbroso/free-disk-space@main
@@ -38,11 +40,12 @@ jobs:
         uses: redhat-actions/buildah-build@v2
         with:
           image: gpu-jupyter-alphafold
-          tags: latest cuda-${{ matrix.cuda-version }}-${{ steps.vars.outputs.sha_short }}
+          tags: latest ${{ steps.vars.outputs.image_tag }}
           containerfiles: |
             ./Containerfile
           build-args: |
             CUDA=${{ matrix.cuda-version }}
+            BASE=${{ matrix.base-image }}
           # workaround for https://github.com/pypa/pip/issues/11368
           extra-args: |
             --storage-opt=overlay.mount_program=
@@ -52,13 +55,13 @@ jobs:
         if: github.ref == 'refs/heads/main'
         with:
           image: ${{ steps.build-image.outputs.image }}
-          tags: cuda-${{ matrix.cuda-version }}-${{ steps.vars.outputs.sha_short }}
+          tags: ${{ steps.vars.outputs.image_tag }}
           registry: quay.io/abn
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Push To quay.io (latest tag)
-        if: ${{ github.ref == 'refs/heads/main' && matrix.latest == matrix.cuda-version  }}
+        if: ${{ github.ref == 'refs/heads/main' && matrix.latest == matrix.cuda-version && matrix.base-image == 'devel' }}
         uses: redhat-actions/push-to-registry@v2
         with:
           image: ${{ steps.build-image.outputs.image }}
