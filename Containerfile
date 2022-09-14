@@ -70,7 +70,9 @@ RUN conda install -y -c conda-forge \
       openmm \
       cudatoolkit \
       pdbfixer \
-      py3dmol
+      # additional useful packages
+      py3dmol \
+      matplotlib
 
 RUN conda clean -afy \
     && find ${CONDA_DIR} -follow -type f -name '*.a' -delete \
