@@ -1,8 +1,9 @@
 ARG CUDA=11.7.1
 ARG UBUNTU=22.04
 ARG BASE=runtime
+ARG HUB=3.0.0
 
-FROM docker.io/jupyter/base-notebook:ubuntu-${UBUNTU} AS base-notebook
+FROM docker.io/jupyter/base-notebook:${HUB} AS base-notebook
 
 
 FROM docker.io/nvidia/cuda:${CUDA}-cudnn8-devel-ubuntu${UBUNTU} AS alphafold-build
