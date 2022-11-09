@@ -11,6 +11,7 @@ FROM docker.io/nvidia/cuda:${CUDA}-cudnn8-devel-ubuntu${UBUNTU} AS alphafold-bui
 ARG CONDA_DIR=/opt/conda
 ARG HHSUITE_DIR=/opt/hhsuite
 ARG HHSUITE_VERSION=3.3.0
+ARG ALPHAFOLD_GH_PROJECT=deepmind/alphafold
 ARG ALPHAFOLD_DIR=/opt/alphafold
 ARG ALPHAFOLD_COMMIT=86a0b8ec7a39698a7c2974420c4696ea4cb5743a
 
@@ -45,7 +46,7 @@ RUN mkdir -p ${HHSUITE_DIR} \
 
 RUN mkdir ${ALPHAFOLD_DIR} \
     && curl -sS -L \
-        https://api.github.com/repos/deepmind/alphafold/tarball/${ALPHAFOLD_COMMIT} \
+        https://api.github.com/repos/${ALPHAFOLD_GH_PROJECT}/tarball/${ALPHAFOLD_COMMIT} \
         | tar -xz --strip-components=1 -C ${ALPHAFOLD_DIR}
 
 RUN wget -q -P ${ALPHAFOLD_DIR}/alphafold/common/ \
