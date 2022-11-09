@@ -29,16 +29,6 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Compile HHsuite from source.
-# RUN git clone --branch v${HHSUITE_VERSION} https://github.com/soedinglab/hh-suite.git /tmp/hh-suite \
-#     && mkdir /tmp/hh-suite/build \
-#     && cd /tmp/hh-suite/build \
-#     # fix https://github.com/soedinglab/hh-suite/issues/282 to support AMD
-#     && cmake -DCMAKE_INSTALL_PREFIX=${HHSUITE_DIR}-DHAVE_AVX2=1 .. \
-#     && make -j 4 && make install \
-#     && cd - \
-#     && rm -rf /tmp/hh-suite
-
 # Install hhsuite static binaries (lacks mpi support)
 RUN mkdir -p ${HHSUITE_DIR} \
     && curl -sSL https://github.com/soedinglab/hh-suite/releases/download/v${HHSUITE_VERSION}/hhsuite-${HHSUITE_VERSION}-AVX2-Linux.tar.gz \
