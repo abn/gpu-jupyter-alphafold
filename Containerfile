@@ -14,6 +14,9 @@ ARG HHSUITE_VERSION=3.3.0
 ARG ALPHAFOLD_GH_PROJECT=deepmind/alphafold
 ARG ALPHAFOLD_DIR=/opt/alphafold
 ARG ALPHAFOLD_COMMIT=86a0b8ec7a39698a7c2974420c4696ea4cb5743a
+ARG PARALLELFOLD_GH_PROJECT=zuricho/parallelfold
+ARG PARALLELFOLD_DIR=/opt/parallelfold
+ARG PARALLELFOLD_COMMIT=2b651ebdb8686c30a345af1bb79d5488fda453bd
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1
@@ -39,8 +42,16 @@ RUN mkdir ${ALPHAFOLD_DIR} \
         https://api.github.com/repos/${ALPHAFOLD_GH_PROJECT}/tarball/${ALPHAFOLD_COMMIT} \
         | tar -xz --strip-components=1 -C ${ALPHAFOLD_DIR}
 
+# install parallelfold
+RUN mkdir ${PARALLELFOLD_DIR} \
+    && curl -sS -L \
+        https://api.github.com/repos/${PARALLELFOLD_GH_PROJECT}/tarball/${PARALLELFOLD_COMMIT} \
+        | tar -xz --strip-components=1 -C ${PARALLELFOLD_DIR}
+
+
 RUN wget -q -P ${ALPHAFOLD_DIR}/alphafold/common/ \
   https://git.scicore.unibas.ch/schwede/openstructure/-/raw/7102c63615b64735c4941278d92b554ec94415f8/modules/mol/alg/src/stereo_chemical_props.txt
+RUN cp ${ALPHAFOLD_DIR}/alphafold/common/stereo_chemical_props.txt ${PARALLELFOLD_DIR}/alphafold/common/
 
 ENV PATH="${CONDA_DIR}/bin:${HHSUITE_DIR}/bin:${HHSUITE_DIR}/scripts:${PATH}"
 
@@ -74,14 +85,21 @@ RUN conda clean -afy \
 # Install alphafold (editable)
 RUN pip install --no-deps -e ${ALPHAFOLD_DIR}
 
-# Out-of-tree patches
+# Out-of-tree patches (alphafold)
 RUN sh -c 'find ${ALPHAFOLD_DIR} -type f -name "*.py" -exec sed -i s/simtk.openmm/openmm/ {} \;'
+
+# Out-of-tree patches (parallelfold)
+RUN sh -c 'find ${PARALLELFOLD_DIR} -type f -name "*.py" -exec sed -i s/simtk.openmm/openmm/ {} \;'
+RUN sh -c 'find ${PARALLELFOLD_DIR} -type f -name "*.py" -exec sed -i s/collections.Iterable/collections.abc.Iterable/ {} \;'
+RUN sh -c 'sed -i s/jax.tree_multimap/jax.tree_map/ ${PARALLELFOLD_DIR}/alphafold/model/mapping.py'
+
 
 FROM docker.io/nvidia/cuda:${CUDA}-cudnn8-${BASE}-ubuntu${UBUNTU}
 
 ARG CONDA_DIR=/opt/conda
 ARG HHSUITE_DIR=/opt/hhsuite
 ARG ALPHAFOLD_DIR=/opt/alphafold
+ARG PARALLELFOLD_DIR=/opt/parallelfold
 
 ARG NB_USER="jovyan"
 ARG NB_UID="1000"
@@ -96,6 +114,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Configure environment
 ENV CONDA_DIR=${CONDA_DIR} \
     ALPHAFOLD_DIR=${ALPHAFOLD_DIR} \
+    PARALLELFOLD_DIR=${PARALLELFOLD_DIR} \
     SHELL=/bin/bash \
     NB_USER="${NB_USER}" \
     NB_UID=${NB_UID} \
@@ -151,12 +170,14 @@ COPY --chown="${NB_UID}:${NB_GID}" --from=base-notebook /home/${NB_USER} /home/$
 COPY --chown="${NB_UID}:${NB_GID}" --from=alphafold-build ${CONDA_DIR} ${CONDA_DIR}
 COPY --chown="${NB_UID}:${NB_GID}" --from=alphafold-build ${HHSUITE_DIR} ${HHSUITE_DIR}
 COPY --chown="${NB_UID}:${NB_GID}" --from=alphafold-build ${ALPHAFOLD_DIR} ${ALPHAFOLD_DIR}
+COPY --chown="${NB_UID}:${NB_GID}" --from=alphafold-build ${PARALLELFOLD_DIR} ${PARALLELFOLD_DIR}
 
 RUN useradd -l -M -s /bin/bash -N -u "${NB_UID}" "${NB_USER}" \
     && chmod g+w /etc/passwd \
     && fix-permissions "${HOME}" \
     && fix-permissions "${CONDA_DIR}" \
     && fix-permissions "${ALPHAFOLD_DIR}" \
+    && fix-permissions "${PARALLELFOLD_DIR}" \
     && fix-permissions /etc/jupyter
 
 # Add SETUID bit to the ldconfig binary so that non-root users can run it.
@@ -174,6 +195,12 @@ RUN echo $'#!/bin/bash\n\
 sudo ldconfig\n\
 python ${ALPHAFOLD_DIR}/run_alphafold.py "$@"' > /usr/local/bin/alphafold \
   && chmod +x /usr/local/bin/alphafold
+
+# parallelfold
+RUN echo $'#!/bin/bash\n\
+sudo ldconfig\n\
+PYTHONPATH=${PARALLELFOLD_DIR} python ${PARALLELFOLD_DIR}/run_alphafold.py "$@"' > /usr/local/bin/parallelfold \
+  && chmod +x /usr/local/bin/parallelfold
 
 USER ${NB_UID}
 WORKDIR "${HOME}"
