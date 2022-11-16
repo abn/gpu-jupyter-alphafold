@@ -77,6 +77,9 @@ RUN conda install -y -c conda-forge \
       py3dmol \
       matplotlib
 
+RUN conda install -y -c bioconda \
+      kalign2
+
 RUN conda clean -afy \
     && find ${CONDA_DIR} -follow -type f -name '*.a' -delete \
     && find ${CONDA_DIR} -follow -type f -name '*.pyc' -delete \
