@@ -172,6 +172,9 @@ COPY --chown="${NB_UID}:${NB_GID}" --from=alphafold-build ${HHSUITE_DIR} ${HHSUI
 COPY --chown="${NB_UID}:${NB_GID}" --from=alphafold-build ${ALPHAFOLD_DIR} ${ALPHAFOLD_DIR}
 COPY --chown="${NB_UID}:${NB_GID}" --from=alphafold-build ${PARALLELFOLD_DIR} ${PARALLELFOLD_DIR}
 
+# install additional packages
+RUN pip install ipyfilechooser
+
 RUN useradd -l -M -s /bin/bash -N -u "${NB_UID}" "${NB_USER}" \
     && chmod g+w /etc/passwd \
     && fix-permissions "${HOME}" \
