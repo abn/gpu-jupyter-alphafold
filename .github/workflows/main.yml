@@ -16,7 +16,7 @@ jobs:
       matrix:
         hub-version: ["3.0.0", "2.3.1"]
         base-image: ["runtime", "devel"]
-        cuda-version: [ "11.7.1" ]
+        cuda-version: [ "11.7.1", "11.8.0" ]
         latest: [ "11.7.1" ]
     steps:
       - uses: actions/checkout@v2
