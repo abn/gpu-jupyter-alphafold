@@ -1,7 +1,7 @@
 ARG CUDA=11.7.1
 ARG UBUNTU=22.04
 ARG BASE=runtime
-ARG HUB=3.0.0
+ARG HUB=4.0.1
 
 FROM docker.io/jupyter/base-notebook:hub-${HUB} AS base-notebook
 
@@ -13,10 +13,10 @@ ARG HHSUITE_DIR=/opt/hhsuite
 ARG HHSUITE_VERSION=3.3.0
 ARG ALPHAFOLD_GH_PROJECT=deepmind/alphafold
 ARG ALPHAFOLD_DIR=/opt/alphafold
-ARG ALPHAFOLD_COMMIT=86a0b8ec7a39698a7c2974420c4696ea4cb5743a
+ARG ALPHAFOLD_COMMIT=3f31725591b0c6b0b6d63214235d3abe6b81742c
 ARG PARALLELFOLD_GH_PROJECT=zuricho/parallelfold
 ARG PARALLELFOLD_DIR=/opt/parallelfold
-ARG PARALLELFOLD_COMMIT=2b651ebdb8686c30a345af1bb79d5488fda453bd
+ARG PARALLELFOLD_COMMIT=02303ce7903a243e8c8cddfc7fce45b65f0e6713
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1
@@ -57,8 +57,8 @@ ENV PATH="${CONDA_DIR}/bin:${HHSUITE_DIR}/bin:${HHSUITE_DIR}/scripts:${PATH}"
 
 COPY --from=base-notebook ${CONDA_DIR} ${CONDA_DIR}
 
-RUN pip install jax==0.3.16 \
-      jaxlib==0.3.15+cuda11.cudnn82 \
+RUN pip install jax==0.3.25 \
+      jaxlib==0.3.25+cuda11.cudnn82 \
       -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 
 RUN pip install tensorflow
