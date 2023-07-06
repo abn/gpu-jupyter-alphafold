@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        hub-version: ["3.0.0", "2.3.1"]
+        hub-version: ["4.0.1", "3.1.1", "3.0.0"]
         base-image: ["runtime", "devel"]
         cuda-version: [ "11.7.1", "11.8.0" ]
         latest: [ "11.7.1" ]
