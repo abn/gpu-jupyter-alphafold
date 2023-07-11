@@ -57,8 +57,8 @@ ENV PATH="${CONDA_DIR}/bin:${HHSUITE_DIR}/bin:${HHSUITE_DIR}/scripts:${PATH}"
 
 COPY --from=base-notebook ${CONDA_DIR} ${CONDA_DIR}
 
-RUN pip install jax==0.3.25 \
-      jaxlib==0.3.25+cuda11.cudnn82 \
+RUN pip install jax==0.4.13 \
+      jaxlib==0.4.13+cuda11.cudnn86 \
       -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 
 RUN pip install tensorflow
