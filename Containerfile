@@ -13,10 +13,10 @@ ARG HHSUITE_DIR=/opt/hhsuite
 ARG HHSUITE_VERSION=3.3.0
 ARG ALPHAFOLD_GH_PROJECT=deepmind/alphafold
 ARG ALPHAFOLD_DIR=/opt/alphafold
-ARG ALPHAFOLD_COMMIT=3f31725591b0c6b0b6d63214235d3abe6b81742c
+ARG ALPHAFOLD_COMMIT=86a0b8ec7a39698a7c2974420c4696ea4cb5743a
 ARG PARALLELFOLD_GH_PROJECT=zuricho/parallelfold
 ARG PARALLELFOLD_DIR=/opt/parallelfold
-ARG PARALLELFOLD_COMMIT=02303ce7903a243e8c8cddfc7fce45b65f0e6713
+ARG PARALLELFOLD_COMMIT=2b651ebdb8686c30a345af1bb79d5488fda453bd
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1
@@ -57,8 +57,8 @@ ENV PATH="${CONDA_DIR}/bin:${HHSUITE_DIR}/bin:${HHSUITE_DIR}/scripts:${PATH}"
 
 COPY --from=base-notebook ${CONDA_DIR} ${CONDA_DIR}
 
-RUN pip install jax==0.4.11 \
-      jaxlib==0.4.11+cuda11.cudnn86 \
+RUN pip install jax==0.3.25 \
+      jaxlib==0.3.25+cuda11.cudnn82 \
       -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 
 RUN pip install tensorflow
