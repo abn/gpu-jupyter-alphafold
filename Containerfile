@@ -1,4 +1,4 @@
-ARG CUDA=11.7.1
+ARG CUDA=12.1.1
 ARG UBUNTU=22.04
 ARG BASE=runtime
 ARG LAB=4.0.6
@@ -56,8 +56,8 @@ ENV PATH="${CONDA_DIR}/bin:${HHSUITE_DIR}/bin:${HHSUITE_DIR}/scripts:${PATH}"
 
 COPY --from=base-notebook ${CONDA_DIR} ${CONDA_DIR}
 
-RUN pip install jax==0.4.13 \
-      jaxlib==0.4.13+cuda11.cudnn86 \
+RUN pip install jax==0.4.14 \
+      jaxlib==0.4.14+cuda${CUDA%%.*}.cudnn86 \
       -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 
 RUN pip install tensorflow
