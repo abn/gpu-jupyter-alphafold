@@ -10,7 +10,7 @@ on:
 
 jobs:
   container-build:
-    name: Container Image Build (hub:${{ matrix.lab-version }} cuda:${{ matrix.cuda-version }}-${{ matrix.base-image }})
+    name: Container Image Build (lab:${{ matrix.lab-version }} cuda:${{ matrix.cuda-version }}-${{ matrix.base-image }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
