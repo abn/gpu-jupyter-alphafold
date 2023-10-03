@@ -10,21 +10,21 @@ on:
 
 jobs:
   container-build:
-    name: Container Image Build (hub:${{ matrix.hub-version }} cuda:${{ matrix.cuda-version }}-${{ matrix.base-image }})
+    name: Container Image Build (hub:${{ matrix.lab-version }} cuda:${{ matrix.cuda-version }}-${{ matrix.base-image }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        hub-version: ["4.0.1", "3.1.1", "3.0.0"]
+        lab-version: ["4.0.6"]
         base-image: ["runtime", "devel"]
-        cuda-version: [ "11.7.1", "11.8.0" ]
-        latest: [ "11.7.1" ]
+        cuda-version: [ "12.2.2", "11.7.1", "11.8.0" ]
+        latest: [ "12.2.2" ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set outputs
         id: vars
         run: |
-          echo "image_tag=hub-${{ matrix.hub-version }}-cuda-${{ matrix.cuda-version }}-${{ matrix.base-image }}-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "image_tag=lab-${{ matrix.lab-version }}-cuda-${{ matrix.cuda-version }}-${{ matrix.base-image }}-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Free Disk Space
         uses: jlumbroso/free-disk-space@main
@@ -47,7 +47,7 @@ jobs:
           build-args: |
             CUDA=${{ matrix.cuda-version }}
             BASE=${{ matrix.base-image }}
-            HUB=${{ matrix.hub-version }}
+            LAB=${{ matrix.lab-version }}
           # workaround for https://github.com/pypa/pip/issues/11368
           extra-args: |
             --storage-opt=overlay.mount_program=
@@ -63,7 +63,7 @@ jobs:
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Push To quay.io (latest tag)
-        if: ${{ github.ref == 'refs/heads/main' && matrix.latest == matrix.cuda-version && matrix.base-image == 'devel' && matrix.hub-version == '3.0.0' }}
+        if: ${{ github.ref == 'refs/heads/main' && matrix.latest == matrix.cuda-version && matrix.base-image == 'devel' && matrix.lab-version == '3.0.0' }}
         uses: redhat-actions/push-to-registry@v2
         with:
           image: ${{ steps.build-image.outputs.image }}
