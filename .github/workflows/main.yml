@@ -17,7 +17,6 @@ jobs:
         lab-version: ["4.0.6"]
         base-image: ["runtime", "devel"]
         cuda-version: [ "12.1.1", "11.7.1", "11.8.0" ]
-        latest: [ "12.1.1" ]
     steps:
       - uses: actions/checkout@v3
 
@@ -58,16 +57,6 @@ jobs:
         with:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.vars.outputs.image_tag }}
-          registry: quay.io/abn
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
-
-      - name: Push To quay.io (latest tag)
-        if: ${{ github.ref == 'refs/heads/main' && matrix.latest == matrix.cuda-version && matrix.base-image == 'devel' && matrix.lab-version == '3.0.0' }}
-        uses: redhat-actions/push-to-registry@v2
-        with:
-          image: ${{ steps.build-image.outputs.image }}
-          tags: latest
           registry: quay.io/abn
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
