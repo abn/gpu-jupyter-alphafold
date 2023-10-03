@@ -20,6 +20,8 @@ ARG PARALLELFOLD_COMMIT=02303ce7903a243e8c8cddfc7fce45b65f0e6713
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         build-essential \
         cmake \
