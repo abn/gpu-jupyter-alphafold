@@ -5,8 +5,7 @@ ARG LAB=4.0.6
 
 FROM docker.io/jupyter/base-notebook:lab-${LAB} AS base-notebook
 
-
-FROM docker.io/nvidia/cuda:${CUDA}-cudnn8-devel-ubuntu${UBUNTU} AS alphafold-build
+FROM nvcr.io/nvidia/cuda:${CUDA}-cudnn8-devel-ubuntu${UBUNTU} AS alphafold-build
 
 ARG CONDA_DIR=/opt/conda
 ARG HHSUITE_DIR=/opt/hhsuite
@@ -97,7 +96,7 @@ RUN sh -c 'find ${PARALLELFOLD_DIR} -type f -name "*.py" -exec sed -i s/collecti
 RUN sh -c 'sed -i s/jax.tree_multimap/jax.tree_map/ ${PARALLELFOLD_DIR}/alphafold/model/mapping.py'
 
 
-FROM docker.io/nvidia/cuda:${CUDA}-cudnn8-${BASE}-ubuntu${UBUNTU}
+FROM nvcr.io/nvidia/cuda:${CUDA}-cudnn8-${BASE}-ubuntu${UBUNTU}
 
 ARG CONDA_DIR=/opt/conda
 ARG HHSUITE_DIR=/opt/hhsuite

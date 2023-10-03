@@ -16,8 +16,8 @@ jobs:
       matrix:
         lab-version: ["4.0.6"]
         base-image: ["runtime", "devel"]
-        cuda-version: [ "12.2.2", "11.7.1", "11.8.0" ]
-        latest: [ "12.2.2" ]
+        cuda-version: [ "12.1.1", "11.7.1", "11.8.0" ]
+        latest: [ "12.1.1" ]
     steps:
       - uses: actions/checkout@v3
 
